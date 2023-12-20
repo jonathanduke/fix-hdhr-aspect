@@ -1,0 +1,31 @@
+﻿<!--
+Based on: https://gist.github.com/jonathanduke/ab4fc1880e8b245d3f939b122f301938#file-directory-build-props
+Dependent on: https://gist.github.com/jonathanduke/ab4fc1880e8b245d3f939b122f301938#file-buildassemblyinfo-targets
+Public domain: http://unlicense.org/
+Modify as you wish, but you are encouraged to leave this comment for future reference in case the original is updated.
+-->
+<Project>
+
+  <PropertyGroup>
+    <Product>HDHomeRun Proxy Service</Product>
+    <Description>This service functions as a proxy for an HDHomeRun device and fixes the aspect ratio on certain MPEG streams.</Description>
+    <Company>Jonathan Duke Software, LLC</Company>
+    <Copyright>Copyright © $([System.String]::Format("2023-{0:yyyy}",$([System.DateTime]::Now)).Replace("2023-2023", "2023")) $(Company)</Copyright>
+    <Authors>Jonathan Duke</Authors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <VersionPrefix>1.0.0</VersionPrefix>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)$(Description)' == '' ">
+    <!-- Use the assembly name as the description if none is provided. -->
+    <Description>$(AssemblyName)</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' != 'Release' And '$(VersionSuffix)' == '' ">
+    <!-- Make it obvious if we've got a debug version and no other tag like "beta" has been applied. -->
+    <VersionSuffix>$(Configuration.ToLower())</VersionSuffix>
+  </PropertyGroup>
+
+</Project>

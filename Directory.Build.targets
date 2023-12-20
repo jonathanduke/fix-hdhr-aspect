@@ -1,0 +1,28 @@
+<!--
+Based on: https://gist.github.com/jonathanduke/ab4fc1880e8b245d3f939b122f301938#file-directory-build-targets
+Dependent on: https://gist.github.com/jonathanduke/ab4fc1880e8b245d3f939b122f301938#file-gitbuildprops-targets
+Public domain: http://unlicense.org/
+Modify as you wish, but you are encouraged to leave this comment for future reference in case the original is updated.
+-->
+<Project>
+
+  <PropertyGroup Condition=" '$(AssemblyVersion)' == '' And '$(VersionPrefix)' != '' ">
+    <!-- Zero out the version minor/patch numbers for simpler assembly binding. -->
+    <AssemblyVersion>$(VersionPrefix.Substring(0,$(VersionPrefix.IndexOf('.')))).0.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+  <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation" Condition=" '$(SourceRevisionId)' == ''  And '$(Configuration)' == 'Release' ">
+    <!-- Put the Git hash in the SourceRevisionId property so that it is automatically included in the informational version. -->
+    <Exec Command="git describe --long --always --dirty --exclude=*" EchoOff="true" StandardOutputImportance="low" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="SourceRevisionId" />
+    </Exec>
+  </Target>
+
+  <Target Name="BasePathMapOnSourceRevision" BeforeTargets="BeforeBuild" DependsOnTargets="InitializeSourceControlInformation" Condition=" '$(Configuration)' == 'Release' ">
+    <!-- Remove the local development path from the .pdb file and use the Git hash for uniqueness. -->
+    <PropertyGroup Condition=" '$(SourceRevisionId)' != '' ">
+      <PathMap>$(SolutionDir)=$(SolutionName)\$(SourceRevisionId)</PathMap>
+    </PropertyGroup>
+  </Target>
+
+</Project>

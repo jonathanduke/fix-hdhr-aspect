@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  workflow_dispatch: # run manually only
+
+permissions:
+  contents: write
+
+jobs:
+
+  publish:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Get release version
+      run: |
+        grep -Eo "(\<Version.*)[0-9]+(\.[0-9]+)+" Directory.Build.props > ver.tmp
+        sed -E "s/.*[^0-9.]([0-9.]+)$/X_VERSION=\1/" ver.tmp >> $GITHUB_ENV
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+    - name: Build win-x86
+      run: dotnet publish -c Release -r win-x86 --sc false -p DebugType=embedded -p PublishSingleFile=true
+    - name: Build win-x64
+      run: dotnet publish -c Release -r win-x64 --sc false -p DebugType=embedded -p PublishSingleFile=true
+    - name: Build win-arm64
+      run: dotnet publish -c Release -r win-arm64 --sc false -p DebugType=embedded -p PublishSingleFile=true
+    - name: Build linux-x64
+      run: dotnet publish -c Release -r linux-x64 --sc false -p DebugType=embedded -p PublishSingleFile=true
+    - name: Build linux-arm
+      run: dotnet publish -c Release -r linux-arm --sc false -p DebugType=embedded -p PublishSingleFile=true
+    - name: Build linux-arm64
+      run: dotnet publish -c Release -r linux-arm64 --sc false -p DebugType=embedded -p PublishSingleFile=true
+    - name: Build osx-x64
+      run: dotnet publish -c Release -r osx-x64 --sc false -p DebugType=embedded -p PublishSingleFile=true
+    - name: Build osx-arm64
+      run: dotnet publish -c Release -r osx-arm64 --sc false -p DebugType=embedded -p PublishSingleFile=true
+    - name: Create release assets
+      run: |
+        for folder in FixHdhrAspect/bin/Release/*/*/; do
+          platform=$(basename "$folder")
+          publish=${folder%/}/publish
+          zip -vr "FixHdhrAspect-$X_VERSION-${platform}.zip" -j "$publish"/* -x "*.Development.*"
+        done
+    - name: Update release
+      uses: "marvinpinto/action-automatic-releases@6273874b61ebc8c71f1a61b2d98e234cf389b303"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        prerelease: false
+        files: FixHdhrAspect-*.zip
+        automatic_release_tag: latest
+        title: ${{ env.X_VERSION }}
